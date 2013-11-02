@@ -151,7 +151,6 @@ class APIResource(object):
                 self.variables = {variable: '' for variable in self.template.variables}
             self.hints = hints
         except Exception as e:
-            print e
             self.template = uritemplate.URITemplate('')
             self.variables = {}
             self.hints = None
@@ -220,7 +219,6 @@ class APIClient(object):
 
     def _callURI(self, method, uri, accept, payload = None, payloadType = None):
         try:
-            print "CALLING: " + uri + " " + accept
             request = urllib2.Request(uri, data = payload, headers = { 'Accept' : accept })
             if (self.username and self.password):
                 request.add_header('Authorization', b'Basic ' + base64.b64encode(self.username + b':' + self.password))
@@ -231,7 +229,6 @@ class APIClient(object):
             with contextlib.closing(urllib2.urlopen(request)) as response:
                 return APIResponse(response)
         except Exception as e:
-            print e
             pass
         return None
     
