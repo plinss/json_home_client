@@ -23,6 +23,7 @@ Import the apiclient package and instantiate a client.
        api = apiclient.APIClient('http://api.example.com')
 
 Call APIs:
+
        result = api.call('foo', var1=arg1, var2=arg2)
        print result.data
 
