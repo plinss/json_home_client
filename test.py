@@ -90,11 +90,16 @@ if __name__ == "__main__":      # called from the command line
     github = apiclient.APIClient('https://api.github.com/', version = 'vnd.github.beta')
     print github.get('user_url', user = 'plinss').data
 
-    shepherd = apiclient.APIClient('https://api/csswg.org/shepherd', version = 'vnd.csswg.shepherd.v1')
+#    shepherd = apiclient.APIClient('https://api.csswg.org/shepherd/', version = 'vnd.csswg.shepherd.v1')
+    shepherd = apiclient.APIClient('https://test.linss.com/shepherd/api', version = 'vnd.csswg.shepherd.v1')
     print shepherd.resourceNames
     specs = shepherd.resource('specifications')
     print specs.variables
-    print specs.hints.docs
+#    print specs.hints.docs
     print shepherd.get('specifications', spec = 'compositing-1', anchors = False).data
+
+    suites = shepherd.resource('test_suites')
+    print suites.variables
+    print shepherd.get('test_suites', spec = 'css-shapes-1').data
 
 

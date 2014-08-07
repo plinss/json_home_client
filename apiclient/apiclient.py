@@ -208,6 +208,11 @@ class APIClient(object):
 
     def resource(self, name):
         return self._resources.get(urlparse.urljoin(self.baseURI, name))
+    
+    def addResource(self, name, uri):
+        resource = APIResource(self.baseURI, uri)
+        apiKey = urlparse.urljoin(self.baseURI, name)
+        self._resources[apiKey] = resource
 
     def _accept(self, resource):
         version = None
@@ -234,8 +239,8 @@ class APIClient(object):
     
     def _call(self, method, name, arguments, payload = None, payloadType = None):
         apiKey = urlparse.urljoin(self.baseURI, name)
-
         resource = self._resources.get(apiKey)
+        
         if (resource):
             uri = resource.template.expand(**arguments)
             if (uri):
@@ -257,8 +262,14 @@ class APIClient(object):
     def get(self, name, **kwargs):
         return self._call('GET', name, kwargs)
     
+    def post(self, name, payload = None, payloadType = None, **kwargs):
+        return self._call('POST', name, kwargs, payload, payloadType)
+
     def postForm(self, name, payload = None, **kwargs):
         return self._call('POST', name, kwargs, urllib.urlencode(payload), 'application/x-www-form-urlencoded')
+
+    def postJSON(self, name, payload = None, **kwargs):
+        return self._call('POST', name, kwargs, json.dumps(payload), 'application/json')
 
     def put(self, name, payload = None, payloadType = None, **kwargs):
         return self._call('PUT', name, kwargs, payload, payloadType)
