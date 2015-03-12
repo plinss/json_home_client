@@ -7,3 +7,4 @@ local/*
 *.orig
 uritemplate-test/*
 .git/*
+._*
