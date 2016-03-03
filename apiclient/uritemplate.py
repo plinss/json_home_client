@@ -36,6 +36,13 @@ class BadVariable(Exception):
     def __unicode__(self):
         return u'Bad variable: ' + self.variable
 
+class BadExpansion(Exception):
+    def __init__(self, variable):
+        self.variable = variable
+
+    def __unicode__(self):
+        return u'Bad expansion: ' + self.variable
+
 class URITemplate(object):
     alpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     digit = '0123456789'
@@ -90,7 +97,10 @@ class URITemplate(object):
         return vars
     
     def expand(self, **kwargs):
-        expanded = [part.expand(kwargs) for part in self.parts]
+        try:
+            expanded = [part.expand(kwargs) for part in self.parts]
+        except (BadExpansion):
+            return None
         return ''.join([expandedPart for expandedPart in expanded if (expandedPart is not None)])
 
     def __str__(self):
@@ -185,7 +195,9 @@ class Expression(object):
         return value
     
     def _encodeStr(self, variable, name, value, prefix, joiner, first):
-        if (first and variable.maxLength):
+        if (variable.maxLength):
+            if (not first):
+                raise BadExpansion(variable)
             return self._join(prefix, joiner, self._uriEncodeValue(value[:variable.maxLength]))
         return self._join(prefix, joiner, self._uriEncodeValue(value))
     
