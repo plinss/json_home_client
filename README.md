@@ -78,31 +78,31 @@ Set the request version identifier for a specific resource. If not set, the defa
 
 Set the requested Content-Type(s) for a specific resource. If not set, 'application/json' will be used.
 
-**Client.get(name: str, **kwargs) -> Optional[Response]**
+**Client.get(name: str, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP GET on the named resource. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
-**Client.post(name: str, payload: bytes, content_type: MimeType = None, **kwargs) -> Optional[Response]**
+**Client.post(name: str, payload: bytes, content_type: MimeType = None, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP POST on the named resource. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
-**Client.post_form(name: str, payload: Mapping[str, Any] = None, **kwargs) -> Optional[Response]**
+**Client.post_form(name: str, payload: Mapping[str, Any] = None, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP POST on the named resource. The payload, if present, will be URL form encoded. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
-**Client.post_json(name: str, payload: Any = None, **kwargs) -> Optional[Response]**
+**Client.post_json(name: str, payload: Any = None, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP POST on the named resource. The payload, if present, will be converted to JSON. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
-**Client.put(name: str, payload = None, content_type: MimeType = None, **kwargs) -> Optional[Response]**
+**Client.put(name: str, payload = None, content_type: MimeType = None, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP PUT on the named resource. The payload, if present, will be sent to the server using the provided Content-Type. The payload must be pre-encoded and will not be processed by the Client. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
-**Client.patch(name: str, patch: Mapping[str, Any] = None, content_type: MimeType = MimeType.JSON_PATCH, **kwargs) -> Optional[Response]**
+**Client.patch(name: str, patch: Mapping[str, Any] = None, content_type: MimeType = MimeType.JSON_PATCH, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP PATCH on the named resource. The patch, if present, will be encoded in JSON and sent to the server as a 'application/json-patch'. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
-**Client.delete(name: str, **kwargs) -> Optional[Response]**
+**Client.delete(name: str, [kwargs]) -> Optional[Response]**
 
 Perform an HTTP DELETE on the named resource. Any named arguments supplied may be used in computing the actual URL to call. Returns a Response or None if the resource name is not known.
 
@@ -204,5 +204,3 @@ The subtype, e.g. "application/vnd.app.v1+json" -> "vnd.app.v1"
 Notes
 -----
 Resource names may be absolute URLs or relative to the base URL of the API.
-
-
