@@ -3,7 +3,7 @@ json_home_client
 
 Client class for calling http+json APIs in Python. Requires Python 3.6+.
 
-Suports json home pages per:
+Supports json home pages per:
 https://tools.ietf.org/html/draft-nottingham-json-home-06
 
 
