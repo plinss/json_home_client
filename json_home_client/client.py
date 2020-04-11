@@ -1,13 +1,16 @@
-"""Classes for a Client that understanda JSON home pages."""
+"""Classes for a Client that understands JSON home pages."""
 
 import base64
 import collections
+import http
 import json
 import re
+import socket
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, ClassVar, Dict, List, Mapping, Optional, Sequence, Union, cast
+from typing import Any, ClassVar, Dict, List, Mapping, Optional, Sequence, Tuple, Union, cast
 
 import pkg_resources
 
@@ -221,10 +224,86 @@ class Resource:
         return '\n'.join(output)
 
 
+class HTTPSConnection(http.client.HTTPSConnection):
+    """Subclass of HTTPSConnection to facilitate setting SNI."""
+
+    _context: Optional[ssl.SSLContext]
+    _sni_hostname: Optional[str]
+    sock: Optional[socket.socket]
+    source_address: Tuple[Union[bytearray, bytes, str], int]
+
+    def __init__(self, host: str, port: int = None, context: ssl.SSLContext = None,
+                 sni_hostname: str = None, **kwargs) -> None:
+        http.client.HTTPSConnection.__init__(self, host=host, port=port, context=context, **kwargs)
+        self._context = context
+        self._sni_hostname = sni_hostname
+
+    def connect(self) -> None:
+        """Make connection, setting SNI."""
+        sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+        server_hostname = self._sni_hostname if self._sni_hostname else self.host
+        if (self._context):
+            self.sock = self._context.wrap_socket(sock, server_hostname=server_hostname)
+
+
+class HTTPSHandler(urllib.request.HTTPSHandler):
+    """Subclass of HTTPSHandler to facilitate setting SNI."""
+
+    def __init__(self, context: ssl.SSLContext = None, sni_hostname: str = None, **kwargs) -> None:
+        urllib.request.HTTPSHandler.__init__(self, context=context, **kwargs)
+        self._context = context
+        self._sni_hostname = sni_hostname
+
+    def https_open(self, req: urllib.request.Request) -> http.client.HTTPResponse:
+        """Override https_open to get custom connection class."""
+        return self.do_open(self.get_connection, req)
+
+    def get_connection(self, host: str, port: int = None, timeout: float = 300,
+                       source_address: Tuple[str, int] = None, blocksize: int = 8192,
+                       **kwargs) -> HTTPSConnection:
+        """Factory function to create connections."""
+        return HTTPSConnection(host=host, port=port, timeout=timeout, context=self._context,
+                               sni_hostname=self._sni_hostname, source_address=source_address, **kwargs)
+
+
+class Request(urllib.request.Request):
+    """Subclass of Request to allow setting TLS options."""
+
+    sni_hostname: Optional[str]
+    client_cert_path: Optional[str]
+    client_key_path: Optional[str]
+    ca_cert_path: Optional[str]
+
+    def __init__(self, url: str, sni_hostname: str = None,
+                 client_cert_path: str = None, client_key_path: str = None, ca_cert_path: str = None, **kwargs) -> None:
+        urllib.request.Request.__init__(self, url, **kwargs)
+        self.sni_hostname = sni_hostname
+        self.client_cert_path = client_cert_path
+        self.client_key_path = client_key_path
+        self.ca_cert_path = ca_cert_path
+
+    def open(self) -> Any:
+        """Override open to setup SSLContext and use custom opener."""
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        if (self.client_key_path and self.client_cert_path):
+            context.load_cert_chain(self.client_cert_path, self.client_key_path)
+        if (self.ca_cert_path):
+            context.load_verify_locations(cafile=self.ca_cert_path)
+        context.load_default_certs()
+        context.check_hostname = True
+
+        opener = urllib.request.build_opener(HTTPSHandler(context=context, sni_hostname=self.sni_hostname))
+        return opener.open(self)
+
+
 class Client:
     """Client class to call JSON-Home APIs."""
 
     _base_url: str
+    _sni_hostname: Optional[str]
+    _client_cert_path: Optional[str]
+    _client_key_path: Optional[str]
+    _ca_cert_path: Optional[str]
     default_version: Optional[str]
     default_accept: MimeType
     username: Optional[str]
@@ -234,13 +313,20 @@ class Client:
     _versions: Dict[str, str]
     _accepts: Dict[str, Sequence[MimeType]]
 
-    def __init__(self, base_url: str, version: str = None, username: str = None, password: str = None, user_agent: str = None) -> None:
+    def __init__(self, base_url: str, version: str = None, username: str = None, password: str = None, user_agent: str = None,
+                 sni_hostname: str = None, client_cert_path: str = None, client_key_path: str = None, ca_cert_path: str = None) -> None:
         self._base_url = base_url
+        self._sni_hostname = sni_hostname
+        self._client_cert_path = client_cert_path
+        self._client_key_path = client_key_path
+        self._ca_cert_path = ca_cert_path
+
         self.default_version = version
         self.default_accept = MimeType.JSON
         self.username = username
         self.password = password
         self.user_agent = user_agent if (user_agent) else ('json_home_client/' + self.package_version)
+
         self._resources = {}
         self._versions = {}
         self._accepts = {}
@@ -308,7 +394,10 @@ class Client:
                  payload: bytes = None, content_type: MimeType = None,
                  accept: Sequence[MimeType] = None) -> Response:
         """General purpose request."""
-        request = urllib.request.Request(url=url, data=payload, method=method)
+        request = Request(url=url, sni_hostname=self._sni_hostname,
+                          client_cert_path=self._client_cert_path, client_key_path=self._client_key_path,
+                          ca_cert_path=self._ca_cert_path,
+                          data=payload, method=method)
         if ((payload is not None) and content_type):
             request.add_header('Content-Type', str(content_type))
         if (accept):
