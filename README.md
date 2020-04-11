@@ -30,9 +30,12 @@ Call APIs:
 
 Client class
 ---------------
-**class json_home_client.Client(base_url: str, version: str = None, username: str = None, password: str = None, user_agent: str = None)**
+**class json_home_client.Client(base_url: str, version: str = None, username: str = None, password: str = None, user_agent: str = None,
+                                sni_hostname: str = None, client_cert_path: str = None, client_key_path: str = None, ca_cert_path: str = None)**
 
 The Client constructor takes the base URL for the api, an optional request version identifier, username and password.
+It also allows a custom sni_hostname (useful when the url uses an ip address), client certificate and key, 
+and a custom CA file path.
 
 **Client.base_url: str**
 
