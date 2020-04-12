@@ -407,7 +407,7 @@ class Client:
         request.add_header('User-Agent', self.user_agent)
 
         try:
-            with urllib.request.urlopen(request) as response:
+            with request.open() as response:
                 return Response(response)
         except urllib.error.HTTPError as error:
             raise NetworkError(error.reason, error.code)
