@@ -289,7 +289,9 @@ class Request(urllib.request.Request):
             context.load_cert_chain(self.client_cert_path, self.client_key_path)
         if (self.ca_cert_path):
             context.load_verify_locations(cafile=self.ca_cert_path)
-        context.load_default_certs()
+        else:
+            context.load_default_certs()
+        context.verify_mode = ssl.CERT_REQUIRED
         context.check_hostname = True
 
         opener = urllib.request.build_opener(HTTPSHandler(context=context, sni_hostname=self.sni_hostname))
